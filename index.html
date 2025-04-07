@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SL璽愛</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <!-- JsBarcode -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- HTML5 QRCode -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        .hidden {
+            display: none !important;
+        }
+        body {
+            font-family: '微軟正黑體', sans-serif;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #f5f5f5;
+        }
+
+        /* 後台管理介面樣式 */
+        #staffSection {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+        }
+        
+        #staffSection .search-section {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        #staffSection .form-group {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        #staffSection .form-group label {
+            display: inline-block;
+            width: 100px;
+            margin-right: 10px;
+        }
+
+        #staffSection .form-group input {
+            width: 200px;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #staffSection button {
+            padding: 5px 15px;
+            margin-right: 10px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #staffSection .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        #staffSection .info-table th,
+        #staffSection .info-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #staffSection .info-table th {
+            background-color: #f5f5f5;
+            font-weight: normal;
+            width: 120px;
+        }
+
+        #staffSection .action-btn {
+            padding: 5px 15px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+        }
+
+        #staffSection #visitHistory {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #fff;
+        }
+
+        #staffSection #visitHistory p {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        #staffLogoutBtn {
+            margin-top: 20px;
+            padding: 5px 15px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background-color: #dc3545 !important;
+            color: white;
+        }
+
+        /* 會員介面樣式 */
+        #customerSection {
+            max-width: 100%;
+            padding: 10px;
+        }
+
+        #customerSection .form-group {
+            margin: 20px 0;
+        }
+
+        #customerSection .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #customerSection .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: white;
+        }
+
+        #customerSection button {
+            width: 100%;
+            padding: 15px 25px;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        /* 通用樣式 */
+        button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        .info-table {
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .info-table th, .info-table td {
+            padding: 15px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        /* 登入介面樣式 */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .google-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            margin: 20px 0;
+            background-color: white;
+            color: #444;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 16px;
+        }
+
+        .google-login-btn img {
+            width: 24px;
+            margin-right: 10px;
+        }
+
+        /* 條碼顯示樣式 */
+        .barcode-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .barcode-item {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .barcode-item svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* 刪除確認對話框樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-buttons {
+            margin-top: 25px;
+            text-align: right;
+        }
+
+        .modal-buttons button {
+            margin-left: 10px;
+            min-width: 100px;
+        }
+
+        .cancel-btn {
+            background-color: #6c757d;
+        }
+
+        /* 響應式設計（僅針對會員介面） */
+        @media (max-width: 480px) {
+            #customerSection {
+                padding: 10px;
+            }
+
+            #customerSection .form-group label {
+                font-size: 14px;
+            }
+
+            #customerSection .form-group input {
+                font-size: 16px;
+                padding: 10px;
+            }
+
+            #customerSection button {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .login-container {
+                padding: 20px;
+            }
+
+            .login-container h2 {
+                font-size: 20px;
+            }
+        }
+
+        /* 載入動畫樣式 */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-text {
+            background-color: #fff;
+            padding: 40px 80px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            font-size: 24px;
+            color: #333;
+            text-align: center;
+            min-width: 300px;
+            border: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 載入動畫 -->
+    <div class="loading-overlay">
+        <div class="loading-text">資料處理中,請稍候...</div>
+    </div>
+
+    <!-- 登入區域 -->
+    <div id="loginSection" class="login-overlay">
+        <div class="login-container">
+            <h2>SL璽愛旅店<h2>
+            <div id="adminLoginSection" class="hidden">
+                <div class="form-group">
+                    <label for="email">管理員電子郵件：</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">管理員密碼：</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button id="emailLogin">管理員登入</button>
+            </div>
+            <div id="memberLoginSection">
+                <p>請使用 Google 帳號登入以使用會員功能</p>
+                <button id="googleLogin" class="google-login-btn">
+                    <img src="https://www.google.com/favicon.ico" alt="Google" style="width: 20px; margin-right: 10px;">
+                    使用 Google 登入
+                </button>
+            </div>
+            <div class="admin-login-hint">
+                <button id="showAdminLogin" class="text-button">門市人員</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 會員資料填寫區域 -->
+    <div id="customerSection" class="hidden">
+        <h2>會員資料（customer）</h2>
+        <div class="info-message">請先完整填寫會員資料才能取得會員條碼 Key your customer data to get your barcode</div>
+        <form id="memberInfoForm">
+            <div class="form-group">
+                <label>電子郵件（email）：</label>
+                <span id="memberEmailDisplay"></span>
+            </div>
+            <div class="form-group">
+                <label for="name">姓名（name）</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="idNumber">證件號碼（idNumber）</label>
+                <input type="text" id="idNumber" required>
+            </div>
+            <div class="form-group">
+                <label for="birthDate">出生年月日（birthDate）</label>
+                <input type="date" id="birthDate" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">電話號碼（phone）</label>
+                <input type="tel" id="phone" required>
+            </div>
+            <div class="form-group">
+                <label for="nationality">國籍（nationality）</label>
+                <input type="text" id="nationality" required>
+            </div>
+            <button type="submit" class="submit-btn">儲存資料（save）</button>
+        </form>
+        <div id="barcodeDisplay" class="hidden">
+            <h3>您的會員條碼（barcode）</h3>
+            <p class="barcode-notice">請妥善保存此條碼，每次到訪時請出示（show）</p>
+            <div class="barcode-container">
+                <div class="barcode-number">條碼編號：<span id="memberBarcodeDisplay"></span></div>
+                <div id="barcodeContainer"></div>
+            </div>
+        </div>
+        <button id="logoutBtn">登出（logout）</button>
+    </div>
+
+    <!-- 店員介面 -->
+    <div id="staffSection" class="hidden">
+        <h2>後台</h2>
+        
+        <!-- 搜尋區域 -->
+        <div class="search-section">
+            <div class="form-group">
+                <label for="searchBarcode">會員條碼：</label>
+                <input type="text" id="searchBarcode" placeholder="輸入會員條碼">
+            </div>
+            <div class="form-group">
+                <label for="searchIdNumber">證件號碼：</label>
+                <input type="text" id="searchIdNumber" placeholder="輸入證件號碼">
+            </div>
+            <div class="form-group">
+                <button id="searchBtn">搜尋</button>
+                <button id="addVisitBtn" class="action-btn checkin-btn" disabled>增加到訪次數</button>
+            </div>
+        </div>
+
+        <!-- 會員詳細資料 -->
+        <div id="customerInfo" class="hidden">
+            <h3>會員詳細資料</h3>
+            <table class="info-table">
+                <tr><th>會員條碼</th><td id="customerBarcode"></td></tr>
+                <tr><th>姓名</th><td id="customerName"></td></tr>
+                <tr><th>電話</th><td id="customerPhone"></td></tr>
+                <tr><th>電子郵件</th><td id="customerEmail"></td></tr>
+                <tr><th>證件號碼</th><td id="customerIdNumber"></td></tr>
+                <tr><th>出生年月日</th><td id="customerBirthDate"></td></tr>
+                <tr><th>國籍</th><td id="customerNationality"></td></tr>
+                <tr><th>到訪次數</th><td id="visitCount"></td></tr>
+            </table>
+            <div style="margin: 20px 0;">
+                <button class="action-btn delete-btn" onclick="showDeleteModal()">刪除會員</button>
+            </div>
+            <h4>到訪記錄</h4>
+            <div id="visitHistory"></div>
+        </div>
+
+        <button id="staffLogoutBtn">登出</button>
+    </div>
+
+    <!-- 在 body 中添加確認對話框 -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <h3>確認刪除會員</h3>
+            <p>您確定要刪除此會員嗎？此操作無法復原。</p>
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeDeleteModal()">取消</button>
+                <button class="delete-btn" onclick="confirmDelete()">確認刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAaCC1v4YhL8d1sGjDgjIKumMbzzeydB9M",
+            authDomain: "vipproject-1daf7.firebaseapp.com",
+            projectId: "vipproject-1daf7",
+            storageBucket: "vipproject-1daf7.appspot.com",
+            messagingSenderId: "38611408907",
+            appId: "1:38611408907:web:91ba08924cc33d8758cf0e",
+            measurementId: "G-FSE2CSC7NP"
+        };
+
+        // 初始化 Firebase
+        firebase.initializeApp(firebaseConfig);
+        console.log('Firebase 初始化完成');
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 檢查是否為管理員
+        async function checkIfStaff(uid) {
+            console.log('正在檢查管理員權限，用戶 UID:', uid);
+            try {
+                // 檢查是否為指定的管理員 UID
+                if (uid === 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    console.log('使用預設管理員 UID');
+                    return true;
+                }
+
+                const officialRef = db.collection('official').doc('data');
+                const officialDoc = await officialRef.get();
+                
+                if (!officialDoc.exists) {
+                    console.log('official/data 文件不存在，正在創建...');
+                    try {
+                        // 創建文件並設置指定的 UID 為管理員
+                        await officialRef.set({
+                            staffs: {
+                                't4R9VmALi2SW2fTITmBAtlYDzq32': true
+                            }
+                        });
+                        console.log('成功創建管理員文件');
+                        return uid === 't4R9VmALi2SW2fTITmBAtlYDzq32';
+                    } catch (createError) {
+                        console.error('創建管理員文件時發生錯誤:', createError);
+                        // 如果是指定的管理員 UID，即使創建失敗也返回 true
+                        return uid === 't4R9VmALi2SW2fTITmBAtlYDzq32';
+                    }
+                }
+
+                const data = officialDoc.data();
+                console.log('獲取到的管理員資料:', data);
+                
+                if (!data || !data.staffs) {
+                    console.log('管理員資料格式不正確，檢查是否為預設管理員');
+                    return uid === 't4R9VmALi2SW2fTITmBAtlYDzq32';
+                }
+
+                const isStaff = data.staffs[uid] === true || uid === 't4R9VmALi2SW2fTITmBAtlYDzq32';
+                console.log('用戶是否為管理員:', isStaff);
+                return isStaff;
+            } catch (error) {
+                console.error('檢查管理員權限時發生錯誤:', error);
+                // 如果發生錯誤，檢查是否為預設管理員 UID
+                return uid === 't4R9VmALi2SW2fTITmBAtlYDzq32';
+            }
+        }
+
+        // 電子郵件登入
+        document.getElementById('emailLogin').addEventListener('click', () => {
+            console.log('點擊管理員登入按鈕');
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('準備登入，電子郵件:', email);
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((result) => {
+                    console.log('管理員登入成功', result);
+                    hideLoginInterface();
+                })
+                .catch((error) => {
+                    console.error('管理員登入錯誤:', error);
+                    alert('登入失敗：' + error.message);
+                });
+        });
+
+        // Google 登入
+        document.getElementById('googleLogin').addEventListener('click', () => {
+            console.log('開始 Google 登入流程');
+            const provider = new firebase.auth.GoogleAuthProvider();
+            // 設置登入視窗的配置
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+            
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    console.log('登入成功', result);
+                })
+                .catch((error) => {
+                    console.error('登入錯誤:', error);
+                    // 如果是彈出視窗被封鎖，嘗試使用重定向方式
+                    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+                        console.log('嘗試使用重定向方式登入');
+                        return auth.signInWithRedirect(provider);
+                    }
+                    alert('登入失敗：' + error.message);
+                });
+        });
+
+        // 監聽登入狀態
+        auth.onAuthStateChanged(async (user) => {
+            console.log('登入狀態變更:', user ? '已登入' : '未登入');
+            if (user) {
+                try {
+                    console.log('用戶資訊:', user);
+                    hideLoginInterface();  // 登入成功後隱藏登入介面
+                    // 檢查是否為管理員
+                    const isStaff = await checkIfStaff(user.uid);
+                    
+                    if (isStaff) {
+                        // 顯示管理員介面
+                        showStaffInterface();
+                    } else {
+                        // 檢查會員資料
+                        const userProfileRef = db.collection('users').doc(user.uid)
+                            .collection('data').doc('profile');
+                        const userProfile = await userProfileRef.get();
+
+                        if (!userProfile.exists) {
+                            // 建立新會員資料
+                            const timestamp = Date.now();
+                            const barcode = `MEM${timestamp}`;
+                            
+                            // 先建立 profile 文檔
+                            await userProfileRef.set({
+                                role: 'customer',
+                                email: user.email,
+                                barcode: barcode,
+                                name: '',
+                                idNumber: '',
+                                birthDate: '',
+                                phone: '',
+                                nationality: '',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                isInfoComplete: false
+                            });
+
+                            console.log('新會員資料已建立:', {
+                                uid: user.uid,
+                                barcode: barcode,
+                                email: user.email
+                            });
+                        }
+                        
+                        showCustomerInterface(userProfile.exists ? userProfile.data() : 
+                            (await userProfileRef.get()).data());
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert('發生錯誤，請重新整理頁面');
+                }
+            } else {
+                showLoginInterface();
+            }
+        });
+
+        // 顯示會員介面
+        function showCustomerInterface(userData) {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('customerSection').classList.remove('hidden');
+            document.getElementById('staffSection').classList.add('hidden');
+
+            // 顯示基本資訊
+            document.getElementById('memberEmailDisplay').textContent = userData.email;
+
+            // 填入現有資料
+            if (userData.isInfoComplete) {
+                document.getElementById('name').value = userData.name || '';
+                document.getElementById('idNumber').value = userData.idNumber || '';
+                document.getElementById('birthDate').value = userData.birthDate || '';
+                document.getElementById('phone').value = userData.phone || '';
+                document.getElementById('nationality').value = userData.nationality || '';
+                
+                // 只有在資料完整的情況下才顯示條碼
+                showBarcode(userData.barcode);
+            } else {
+                document.getElementById('barcodeDisplay').classList.add('hidden');
+            }
+        }
+
+        // 修改條碼顯示函數，同時顯示兩種格式
+        function showBarcode(barcode) {
+            const barcodeDisplay = document.getElementById('barcodeDisplay');
+            document.getElementById('memberBarcodeDisplay').textContent = barcode;
+            
+            // 創建兩個 canvas 元素，分別顯示 CODE128 和 CODE39
+            const barcodeContainer = document.getElementById('barcodeContainer');
+            barcodeContainer.innerHTML = `
+                <div class="barcode-item">
+                    <p>CODE128 格式</p>
+                    <svg id="memberBarcode128"></svg>
+                </div>
+                <div class="barcode-item">
+                    <p>CODE39 格式</p>
+                    <svg id="memberBarcode39"></svg>
+                </div>
+            `;
+            
+            // 生成 CODE128 條碼
+            JsBarcode("#memberBarcode128", barcode, {
+                format: "CODE128",
+                width: 2,
+                height: 100,
+                displayValue: true,
+                text: barcode
+            });
+            
+            // 生成 CODE39 條碼
+            JsBarcode("#memberBarcode39", barcode, {
+                format: "CODE39",
+                width: 2,
+                height: 100,
+                displayValue: true,
+                text: barcode
+            });
+            
+            barcodeDisplay.classList.remove('hidden');
+        }
+
+        // 顯示管理員介面
+        function showStaffInterface() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('customerSection').classList.add('hidden');
+            document.getElementById('staffSection').classList.remove('hidden');
+
+            // 綁定搜尋功能
+            document.getElementById('searchBtn').addEventListener('click', searchMember);
+        }
+
+        // 修改搜尋會員函數，支援兩種條碼格式
+        async function searchMember() {
+            const barcode = document.getElementById('searchBarcode').value.trim();
+            const idNumber = document.getElementById('searchIdNumber').value.trim();
+
+            if (!barcode && !idNumber) {
+                alert('請輸入會員條碼或證件號碼');
+                return;
+            }
+
+            try {
+                showLoading(); // 顯示載入動畫
+                console.log('開始搜尋會員:', { barcode, idNumber });
+                
+                // 使用 collectionGroup 查詢所有 profile 文檔
+                const querySnapshot = await db.collectionGroup('data')
+                    .where('role', '==', 'customer')
+                    .get();
+
+                console.log('搜尋結果數量:', querySnapshot.size);
+
+                // 清空輸入框
+                document.getElementById('searchBarcode').value = '';
+                document.getElementById('searchIdNumber').value = '';
+
+                // 在記憶體中過濾符合條件的會員
+                const foundDoc = querySnapshot.docs.find(doc => {
+                    const data = doc.data();
+                    if (barcode) {
+                        return data.barcode === barcode;
+                    }
+                    if (idNumber) {
+                        return data.idNumber === idNumber;
+                    }
+                    return false;
+                });
+
+                if (!foundDoc) {
+                    console.log('未找到會員');
+                    alert('找不到此會員');
+                    document.getElementById('addVisitBtn').disabled = true;
+                    return;
+                }
+
+                const userData = foundDoc.data();
+                const userId = foundDoc.ref.parent.parent.id;
+
+                console.log('找到會員:', {
+                    userId: userId,
+                    barcode: userData.barcode,
+                    name: userData.name,
+                    idNumber: userData.idNumber
+                });
+
+                // 啟用增加到訪次數按鈕並重新綁定事件
+                const addVisitBtn = document.getElementById('addVisitBtn');
+                addVisitBtn.disabled = false;
+                addVisitBtn.onclick = function() {
+                    console.log('增加到訪次數按鈕被點擊（從搜尋結果）');
+                    addVisit();
+                };
+                
+                // 儲存當前搜尋到的會員資料
+                window.currentSearchedMember = {
+                    userId: userId,
+                    barcode: userData.barcode
+                };
+
+                // 顯示會員詳情
+                await viewMemberDetails(userId);
+                
+                console.log('搜尋流程完成');
+            } catch (error) {
+                console.error('搜尋會員時發生錯誤:', error);
+                alert('搜尋失敗：' + error.message);
+                document.getElementById('addVisitBtn').disabled = true;
+            } finally {
+                hideLoading(); // 隱藏載入動畫
+            }
+        }
+
+        // 查看會員詳情
+        async function viewMemberDetails(userId) {
+            try {
+                showLoading(); // 顯示載入動畫
+                // 先確認是否為管理員
+                if (auth.currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    throw new Error('權限不足');
+                }
+
+                console.log('開始查看會員詳情，用戶 ID:', userId);
+
+                // 使用 UID 直接查詢
+                const profileSnapshot = await db.collection('users')
+                    .doc(userId)
+                    .collection('data')
+                    .doc('profile')
+                    .get();
+
+                if (!profileSnapshot.exists) {
+                    console.log('未找到會員詳情');
+                    alert('找不到會員詳情');
+                    return;
+                }
+
+                const userData = profileSnapshot.data();
+
+                console.log('開始載入會員詳細資訊');
+
+                // 獲取訪問記錄
+                const visitsSnapshot = await db.collection('users')
+                    .doc(userId)
+                    .collection('visits')
+                    .orderBy('timestamp', 'desc')
+                    .get();
+
+                console.log('取得到訪記錄，次數:', visitsSnapshot.size);
+
+                // 顯示會員資訊
+                document.getElementById('customerBarcode').textContent = userData.barcode || '';
+                document.getElementById('customerName').textContent = userData.name || '';
+                document.getElementById('customerPhone').textContent = userData.phone || '';
+                document.getElementById('customerEmail').textContent = userData.email || '';
+                document.getElementById('customerIdNumber').textContent = userData.idNumber || '';
+                document.getElementById('customerBirthDate').textContent = userData.birthDate || '';
+                document.getElementById('customerNationality').textContent = userData.nationality || '';
+                document.getElementById('visitCount').textContent = visitsSnapshot.size;
+
+                // 顯示訪問記錄
+                const visitHistory = document.getElementById('visitHistory');
+                visitHistory.innerHTML = '';
+                visitsSnapshot.forEach(visit => {
+                    const visitDate = visit.data().timestamp.toDate();
+                    const p = document.createElement('p');
+                    p.textContent = visitDate.toLocaleString('zh-TW');
+                    visitHistory.appendChild(p);
+                });
+
+                document.getElementById('customerInfo').classList.remove('hidden');
+                console.log('會員詳情顯示完成');
+            } catch (error) {
+                console.error('載入會員詳情時發生錯誤:', error);
+                if (error.code === 'permission-denied') {
+                    alert('您沒有權限查看會員詳情。請確保您已登入管理員帳號。');
+                } else {
+                    alert('載入會員詳情失敗：' + error.message);
+                }
+            } finally {
+                hideLoading(); // 隱藏載入動畫
+            }
+        }
+
+        // 顯示登入介面
+        function showLoginInterface() {
+            document.getElementById('loginSection').style.display = 'flex';
+            document.getElementById('customerSection').classList.add('hidden');
+            document.getElementById('staffSection').classList.add('hidden');
+        }
+
+        // 隱藏登入介面
+        function hideLoginInterface() {
+            document.getElementById('loginSection').style.display = 'none';
+        }
+
+        // 處理會員資料表單提交
+        document.getElementById('memberInfoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+                const userData = {
+                    name: document.getElementById('name').value,
+                    idNumber: document.getElementById('idNumber').value,
+                    birthDate: document.getElementById('birthDate').value,
+                    phone: document.getElementById('phone').value,
+                    nationality: document.getElementById('nationality').value,
+                    isInfoComplete: true
+                };
+
+                await db.collection('users').doc(user.uid)
+                    .collection('data').doc('profile')
+                    .update(userData);
+
+                // 獲取完整的用戶資料
+                const userProfile = await db.collection('users').doc(user.uid)
+                    .collection('data').doc('profile')
+                    .get();
+
+                // 顯示條碼
+                showBarcode(userProfile.data().barcode);
+                
+                alert('資料已成功儲存！現在您可以看到您的會員條碼。');
+            } catch (error) {
+                console.error("Error saving data:", error);
+                alert('儲存資料時發生錯誤');
+            }
+        });
+
+        // 登出按鈕
+        document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
+        document.getElementById('staffLogoutBtn').addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // 顯示管理員登入區域
+        document.getElementById('showAdminLogin').addEventListener('click', () => {
+            console.log('點擊顯示管理員登入區域按鈕');
+            const adminLoginSection = document.getElementById('adminLoginSection');
+            const memberLoginSection = document.getElementById('memberLoginSection');
+            
+            // 切換管理員登入區域的顯示狀態
+            adminLoginSection.classList.toggle('hidden');
+            
+            // 如果顯示管理員登入，則隱藏會員登入
+            if (!adminLoginSection.classList.contains('hidden')) {
+                memberLoginSection.classList.add('hidden');
+            } else {
+                memberLoginSection.classList.remove('hidden');
+            }
+            
+            console.log('管理員登入區域顯示狀態:', !adminLoginSection.classList.contains('hidden'));
+        });
+
+        // 刪除會員相關變數
+        let currentDeletingMember = null;
+
+        // 顯示刪除確認對話框
+        function showDeleteModal() {
+            const memberName = document.getElementById('customerName').textContent;
+            const memberBarcode = document.getElementById('customerBarcode').textContent;
+            currentDeletingMember = {
+                barcode: memberBarcode,
+                name: memberName
+            };
+            document.getElementById('deleteConfirmModal').style.display = 'block';
+        }
+
+        // 關閉刪除確認對話框
+        function closeDeleteModal() {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            currentDeletingMember = null;
+        }
+
+        // 確認刪除會員
+        async function confirmDelete() {
+            if (!currentDeletingMember) return;
+
+            try {
+                // 先確認是否為管理員
+                if (auth.currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    throw new Error('權限不足');
+                }
+
+                console.log('開始刪除會員:', currentDeletingMember);
+
+                // 搜尋會員
+                const querySnapshot = await db.collectionGroup('data')
+                    .where('barcode', '==', currentDeletingMember.barcode)
+                    .where('role', '==', 'customer')
+                    .limit(1)
+                    .get();
+
+                if (querySnapshot.empty) {
+                    throw new Error('找不到此會員');
+                }
+
+                const userProfile = querySnapshot.docs[0];
+                const userId = userProfile.ref.parent.parent.id;
+
+                // 刪除會員所有資料
+                const batch = db.batch();
+
+                // 刪除 profile 文檔
+                batch.delete(userProfile.ref);
+
+                // 刪除訪問記錄
+                const visitsSnapshot = await db.collection('users')
+                    .doc(userId)
+                    .collection('visits')
+                    .get();
+
+                visitsSnapshot.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+
+                // 執行批次刪除
+                await batch.commit();
+
+                alert(`會員 ${currentDeletingMember.name || currentDeletingMember.barcode} 已成功刪除`);
+                
+                // 關閉確認對話框和會員詳情
+                closeDeleteModal();
+                document.getElementById('customerInfo').classList.add('hidden');
+            } catch (error) {
+                console.error('刪除會員時發生錯誤:', error);
+                alert('刪除會員失敗：' + error.message);
+            } finally {
+                closeDeleteModal();
+            }
+        }
+
+        // 在點擊對話框背景時關閉
+        window.onclick = function(event) {
+            const modal = document.getElementById('deleteConfirmModal');
+            if (event.target == modal) {
+                closeDeleteModal();
+            }
+        }
+
+        // 在搜尋完成後清空欄位
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            await searchMember();
+        });
+
+        // 在按下 Enter 鍵時也觸發搜尋
+        document.getElementById('searchBarcode').addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                await searchMember();
+            }
+        });
+
+        document.getElementById('searchIdNumber').addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                await searchMember();
+            }
+        });
+
+        // 增加到訪次數
+        async function addVisit() {
+            try {
+                showLoading(); // 顯示載入動畫
+                console.log('開始增加到訪紀錄');
+                console.log('當前搜尋到的會員:', window.currentSearchedMember);
+
+                if (!window.currentSearchedMember) {
+                    console.log('未找到當前搜尋的會員資料');
+                    alert('請先搜尋會員');
+                    return;
+                }
+
+                // 先確認是否為管理員
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    throw new Error('請先登入');
+                }
+                
+                console.log('當前用戶:', currentUser.uid);
+                
+                if (currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    throw new Error('權限不足');
+                }
+
+                const { userId, barcode } = window.currentSearchedMember;
+                console.log('準備增加到訪紀錄:', { userId, barcode });
+            
+                // 直接增加到訪紀錄，不需要檢查今日是否已到訪
+                const visitRef = await db.collection('users').doc(userId)
+                    .collection('visits')
+                    .add({
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        scannedBy: currentUser.uid
+                    });
+
+                console.log('到訪紀錄已新增:', visitRef.id);
+                alert('已成功增加到訪紀錄！');
+                
+                // 重新載入會員詳情
+                console.log('重新載入會員詳情');
+                await viewMemberDetails(userId);
+            } catch (error) {
+                console.error('增加到訪紀錄時發生錯誤:', error);
+                alert('增加到訪紀錄失敗：' + error.message);
+            } finally {
+                hideLoading(); // 隱藏載入動畫
+            }
+        }
+
+        // 添加顯示和隱藏載入動畫的函數
+        function showLoading() {
+            document.querySelector('.loading-overlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.querySelector('.loading-overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
