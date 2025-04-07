@@ -33,37 +33,65 @@
         }
         
         #staffSection .search-section {
-            background-color: #f5f5f5;
-            padding: 15px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        #staffSection .search-section h2 {
+            margin: 0 0 20px 0;
+            color: #333;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        #staffSection .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #staffSection .search-form .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #staffSection .search-form label {
+            font-size: 16px;
+            color: #333;
+        }
+
+        #staffSection .search-form input {
+            padding: 12px;
             border: 1px solid #ddd;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
         }
 
-        #staffSection .form-group {
-            display: inline-block;
-            margin-right: 20px;
-            margin-bottom: 10px;
+        #staffSection .search-form .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        #staffSection .form-group label {
-            display: inline-block;
-            width: 100px;
-            margin-right: 10px;
-        }
-
-        #staffSection .form-group input {
-            width: 200px;
-            padding: 5px;
-            border: 1px solid #ccc;
-        }
-
-        #staffSection button {
-            padding: 5px 15px;
-            margin-right: 10px;
+        #staffSection .search-form button {
+            flex: 1;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
             background-color: #4285f4;
             color: white;
-            border: none;
-            cursor: pointer;
+        }
+
+        #staffSection .search-form button:hover {
+            background-color: #357abd;
         }
 
         #staffSection .info-table {
@@ -247,36 +275,6 @@
         /* 刪除確認對話框樣式 */
         .modal {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 15% auto;
-            padding: 25px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-        }
-
-        .modal-buttons {
-            margin-top: 25px;
-            text-align: right;
-        }
-
-        .modal-buttons button {
-            margin-left: 10px;
-            min-width: 100px;
-        }
-
-        .cancel-btn {
-            background-color: #6c757d;
         }
 
         /* 響應式設計（僅針對會員介面） */
@@ -333,9 +331,64 @@
             min-width: 300px;
             border: 1px solid #e0e0e0;
         }
+
+        /* 自定義提示框樣式 */
+        .custom-alert {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 3000;
+            text-align: center;
+            min-width: 300px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .custom-alert .message {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .custom-alert .confirm-btn {
+            padding: 10px 30px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .custom-alert .confirm-btn:hover {
+            background-color: #357abd;
+        }
+
+        .alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2999;
+        }
     </style>
 </head>
 <body>
+    <!-- 自定義提示框 -->
+    <div class="alert-overlay"></div>
+    <div class="custom-alert">
+        <div class="message"></div>
+        <button class="confirm-btn">確定</button>
+    </div>
+
     <!-- 載入動畫 -->
     <div class="loading-overlay">
         <div class="loading-text">資料處理中,請稍候...</div>
@@ -417,17 +470,20 @@
         
         <!-- 搜尋區域 -->
         <div class="search-section">
-            <div class="form-group">
-                <label for="searchBarcode">會員條碼：</label>
-                <input type="text" id="searchBarcode" placeholder="輸入會員條碼">
-            </div>
-            <div class="form-group">
-                <label for="searchIdNumber">證件號碼：</label>
-                <input type="text" id="searchIdNumber" placeholder="輸入證件號碼">
-            </div>
-            <div class="form-group">
-                <button id="searchBtn">搜尋</button>
-                <button id="addVisitBtn" class="action-btn checkin-btn" disabled>增加到訪次數</button>
+            <h2>會員搜尋</h2>
+            <div class="search-form">
+                <div class="form-group">
+                    <label for="searchBarcode">會員條碼：</label>
+                    <input type="text" id="searchBarcode" placeholder="請輸入會員條碼">
+                </div>
+                <div class="form-group">
+                    <label for="searchIdNumber">證件號碼：</label>
+                    <input type="text" id="searchIdNumber" placeholder="請輸入證件號碼">
+                </div>
+                <div class="button-group">
+                    <button onclick="searchMember()">搜尋</button>
+                    <button id="addVisitBtn" disabled onclick="addVisit()">增加到訪次數</button>
+                </div>
             </div>
         </div>
 
@@ -706,32 +762,49 @@
             document.getElementById('searchBtn').addEventListener('click', searchMember);
         }
 
-        // 修改搜尋會員函數，支援兩種條碼格式
+        // 自定義提示框函數
+        function showCustomAlert(message) {
+            const alertOverlay = document.querySelector('.alert-overlay');
+            const customAlert = document.querySelector('.custom-alert');
+            const messageElement = customAlert.querySelector('.message');
+            const confirmBtn = customAlert.querySelector('.confirm-btn');
+
+            messageElement.textContent = message;
+            alertOverlay.style.display = 'block';
+            customAlert.style.display = 'block';
+
+            return new Promise((resolve) => {
+                confirmBtn.onclick = () => {
+                    alertOverlay.style.display = 'none';
+                    customAlert.style.display = 'none';
+                    resolve();
+                };
+            });
+        }
+
+        // 修改搜尋會員函數中的提示
         async function searchMember() {
             const barcode = document.getElementById('searchBarcode').value.trim();
             const idNumber = document.getElementById('searchIdNumber').value.trim();
 
             if (!barcode && !idNumber) {
-                alert('請輸入會員條碼或證件號碼');
+                await showCustomAlert('請輸入會員條碼或證件號碼');
                 return;
             }
 
             try {
-                showLoading(); // 顯示載入動畫
+                showLoading();
                 console.log('開始搜尋會員:', { barcode, idNumber });
                 
-                // 使用 collectionGroup 查詢所有 profile 文檔
                 const querySnapshot = await db.collectionGroup('data')
                     .where('role', '==', 'customer')
                     .get();
 
                 console.log('搜尋結果數量:', querySnapshot.size);
 
-                // 清空輸入框
                 document.getElementById('searchBarcode').value = '';
                 document.getElementById('searchIdNumber').value = '';
 
-                // 在記憶體中過濾符合條件的會員
                 const foundDoc = querySnapshot.docs.find(doc => {
                     const data = doc.data();
                     if (barcode) {
@@ -745,7 +818,7 @@
 
                 if (!foundDoc) {
                     console.log('未找到會員');
-                    alert('找不到此會員');
+                    await showCustomAlert('找不到此會員');
                     document.getElementById('addVisitBtn').disabled = true;
                     return;
                 }
@@ -780,10 +853,10 @@
                 console.log('搜尋流程完成');
             } catch (error) {
                 console.error('搜尋會員時發生錯誤:', error);
-                alert('搜尋失敗：' + error.message);
+                await showCustomAlert('搜尋失敗：' + error.message);
                 document.getElementById('addVisitBtn').disabled = true;
             } finally {
-                hideLoading(); // 隱藏載入動畫
+                hideLoading();
             }
         }
 
@@ -877,6 +950,7 @@
             if (!user) return;
 
             try {
+                showLoading();
                 const userData = {
                     name: document.getElementById('name').value,
                     idNumber: document.getElementById('idNumber').value,
@@ -898,10 +972,12 @@
                 // 顯示條碼
                 showBarcode(userProfile.data().barcode);
                 
-                alert('資料已成功儲存！現在您可以看到您的會員條碼。');
+                await showCustomAlert('資料已成功儲存！現在您可以看到您的會員條碼。');
             } catch (error) {
                 console.error("Error saving data:", error);
-                alert('儲存資料時發生錯誤');
+                await showCustomAlert('儲存資料時發生錯誤');
+            } finally {
+                hideLoading();
             }
         });
 
@@ -1039,13 +1115,13 @@
         // 增加到訪次數
         async function addVisit() {
             try {
-                showLoading(); // 顯示載入動畫
+                showLoading();
                 console.log('開始增加到訪紀錄');
                 console.log('當前搜尋到的會員:', window.currentSearchedMember);
 
                 if (!window.currentSearchedMember) {
                     console.log('未找到當前搜尋的會員資料');
-                    alert('請先搜尋會員');
+                    await showCustomAlert('請先搜尋會員');
                     return;
                 }
 
@@ -1073,16 +1149,16 @@
                     });
 
                 console.log('到訪紀錄已新增:', visitRef.id);
-                alert('已成功增加到訪紀錄！');
+                await showCustomAlert('已成功增加到訪紀錄！');
                 
                 // 重新載入會員詳情
                 console.log('重新載入會員詳情');
                 await viewMemberDetails(userId);
             } catch (error) {
                 console.error('增加到訪紀錄時發生錯誤:', error);
-                alert('增加到訪紀錄失敗：' + error.message);
+                await showCustomAlert('增加到訪紀錄失敗：' + error.message);
             } finally {
-                hideLoading(); // 隱藏載入動畫
+                hideLoading();
             }
         }
 
