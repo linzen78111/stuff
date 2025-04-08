@@ -379,6 +379,123 @@
             background-color: rgba(0, 0, 0, 0.5);
             z-index: 2999;
         }
+
+        /* 新增會員收合按鈕樣式 */
+        .toggle-section {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .toggle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .toggle-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .toggle-icon {
+            font-size: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .toggle-content.expanded {
+            max-height: 1000px;
+        }
+
+        .toggle-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        /* 會員清單表格樣式 */
+        .member-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: white;
+        }
+
+        .member-table th,
+        .member-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .member-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .member-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .member-table .action-column {
+            width: 100px;
+            text-align: center;
+        }
+
+        .view-btn {
+            padding: 5px 10px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .view-btn:hover {
+            background-color: #357abd;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 5px 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .pagination button:hover {
+            background-color: #f5f5f5;
+        }
+
+        .pagination button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination button.active {
+            background-color: #4285f4;
+            color: white;
+            border-color: #4285f4;
+        }
     </style>
 </head>
 <body>
@@ -468,17 +585,85 @@
     <div id="staffSection" class="hidden">
         <h2>後台</h2>
         
+        <!-- 會員清單區域 -->
+        <div class="toggle-section">
+            <div class="toggle-header" onclick="toggleMemberList()">
+                <h2>會員清單</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="toggle-content" id="memberListContent">
+                <div class="member-list-container">
+                    <table class="member-table">
+                        <thead>
+                            <tr>
+                                <th>會員條碼</th>
+                                <th>姓名</th>
+                                <th>電話</th>
+                                <th>到訪次數</th>
+                                <th class="action-column">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberListBody">
+                            <!-- 會員資料將在這裡動態載入 -->
+                        </tbody>
+                    </table>
+                    <div class="pagination" id="memberListPagination">
+                        <!-- 分頁按鈕將在這裡動態載入 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 新增會員區域 -->
+        <div class="toggle-section">
+            <div class="toggle-header" onclick="toggleNewMemberForm()">
+                <h2>新增會員</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="toggle-content" id="newMemberForm">
+                <div class="search-form">
+                    <div class="form-group">
+                        <label for="newMemberEmail">電子郵件：</label>
+                        <input type="email" id="newMemberEmail" placeholder="請輸入會員電子郵件">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMemberName">姓名：</label>
+                        <input type="text" id="newMemberName" placeholder="請輸入會員姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMemberIdNumber">證件號碼：</label>
+                        <input type="text" id="newMemberIdNumber" placeholder="請輸入證件號碼">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMemberBirthDate">出生年月日：</label>
+                        <input type="date" id="newMemberBirthDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMemberPhone">電話號碼：</label>
+                        <input type="tel" id="newMemberPhone" placeholder="請輸入電話號碼">
+                    </div>
+                    <div class="form-group">
+                        <label for="newMemberNationality">國籍：</label>
+                        <input type="text" id="newMemberNationality" placeholder="請輸入國籍">
+                    </div>
+                    <div class="button-group">
+                        <button onclick="addNewMember()">新增會員</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- 搜尋區域 -->
         <div class="search-section">
             <h2>會員搜尋</h2>
             <div class="search-form">
                 <div class="form-group">
                     <label for="searchBarcode">會員條碼：</label>
-                    <input type="text" id="searchBarcode" placeholder="請輸入會員條碼">
+                    <input type="text" id="searchBarcode" placeholder="請輸入會員條碼" onkeypress="handleSearchKeyPress(event)">
                 </div>
                 <div class="form-group">
                     <label for="searchIdNumber">證件號碼：</label>
-                    <input type="text" id="searchIdNumber" placeholder="請輸入證件號碼">
+                    <input type="text" id="searchIdNumber" placeholder="請輸入證件號碼" onkeypress="handleSearchKeyPress(event)">
                 </div>
                 <div class="button-group">
                     <button onclick="searchMember()">搜尋</button>
@@ -501,25 +686,13 @@
                 <tr><th>到訪次數</th><td id="visitCount"></td></tr>
             </table>
             <div style="margin: 20px 0;">
-                <button class="action-btn delete-btn" onclick="showDeleteModal()">刪除會員</button>
+                <button class="action-btn delete-btn" onclick="showDeleteConfirm()">刪除會員</button>
             </div>
             <h4>到訪記錄</h4>
             <div id="visitHistory"></div>
         </div>
 
         <button id="staffLogoutBtn">登出</button>
-    </div>
-
-    <!-- 在 body 中添加確認對話框 -->
-    <div id="deleteConfirmModal" class="modal">
-        <div class="modal-content">
-            <h3>確認刪除會員</h3>
-            <p>您確定要刪除此會員嗎？此操作無法復原。</p>
-            <div class="modal-buttons">
-                <button class="cancel-btn" onclick="closeDeleteModal()">取消</button>
-                <button class="delete-btn" onclick="confirmDelete()">確認刪除</button>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -1010,27 +1183,103 @@
         let currentDeletingMember = null;
 
         // 顯示刪除確認對話框
-        function showDeleteModal() {
+        async function showDeleteConfirm() {
             const memberName = document.getElementById('customerName').textContent;
             const memberBarcode = document.getElementById('customerBarcode').textContent;
             currentDeletingMember = {
                 barcode: memberBarcode,
                 name: memberName
             };
-            document.getElementById('deleteConfirmModal').style.display = 'block';
+            
+            // 使用自定義提示框
+            const confirmDelete = await new Promise(resolve => {
+                const alertOverlay = document.querySelector('.alert-overlay');
+                const customAlert = document.querySelector('.custom-alert');
+                const messageElement = customAlert.querySelector('.message');
+                const confirmBtn = customAlert.querySelector('.confirm-btn');
+                
+                messageElement.innerHTML = `確定要刪除會員 ${memberName} 嗎？<br>此操作無法復原。`;
+                alertOverlay.style.display = 'block';
+                customAlert.style.display = 'block';
+                
+                // 移除現有的取消按鈕（如果存在）
+                const existingCancelBtn = customAlert.querySelector('.cancel-btn');
+                if (existingCancelBtn) {
+                    existingCancelBtn.remove();
+                }
+                
+                // 添加取消按鈕
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = '取消';
+                cancelBtn.className = 'confirm-btn cancel-btn';
+                cancelBtn.style.marginLeft = '10px';
+                cancelBtn.style.backgroundColor = '#6c757d';
+                confirmBtn.parentNode.appendChild(cancelBtn);
+                
+                confirmBtn.textContent = '確認刪除';
+                confirmBtn.style.backgroundColor = '#dc3545';
+                
+                // 移除之前的事件監聽器
+                const newConfirmBtn = confirmBtn.cloneNode(true);
+                const newCancelBtn = cancelBtn.cloneNode(true);
+                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+                cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+                
+                const cleanup = () => {
+                    alertOverlay.style.display = 'none';
+                    customAlert.style.display = 'none';
+                    newCancelBtn.remove();
+                    newConfirmBtn.style.backgroundColor = '';
+                    newConfirmBtn.textContent = '確定';
+                    // 移除事件監聽器
+                    document.removeEventListener('keydown', handleKeyPress);
+                };
+                
+                // 處理鍵盤事件
+                const handleKeyPress = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        cleanup();
+                        resolve(true);
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cleanup();
+                        resolve(false);
+                    }
+                };
+                
+                // 添加事件監聽器
+                document.addEventListener('keydown', handleKeyPress);
+                
+                newConfirmBtn.onclick = () => {
+                    cleanup();
+                    resolve(true);
+                };
+                
+                newCancelBtn.onclick = () => {
+                    cleanup();
+                    resolve(false);
+                };
+                
+                alertOverlay.onclick = (e) => {
+                    if (e.target === alertOverlay) {
+                        cleanup();
+                        resolve(false);
+                    }
+                };
+            });
+            
+            if (confirmDelete) {
+                await deleteMember();
+            }
         }
 
-        // 關閉刪除確認對話框
-        function closeDeleteModal() {
-            document.getElementById('deleteConfirmModal').style.display = 'none';
-            currentDeletingMember = null;
-        }
-
-        // 確認刪除會員
-        async function confirmDelete() {
+        // 刪除會員
+        async function deleteMember() {
             if (!currentDeletingMember) return;
 
             try {
+                showLoading();
                 // 先確認是否為管理員
                 if (auth.currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
                     throw new Error('權限不足');
@@ -1071,46 +1320,18 @@
                 // 執行批次刪除
                 await batch.commit();
 
-                alert(`會員 ${currentDeletingMember.name || currentDeletingMember.barcode} 已成功刪除`);
+                await showCustomAlert(`會員 ${currentDeletingMember.name || currentDeletingMember.barcode} 已成功刪除`);
                 
-                // 關閉確認對話框和會員詳情
-                closeDeleteModal();
+                // 隱藏會員詳情
                 document.getElementById('customerInfo').classList.add('hidden');
+                currentDeletingMember = null;
             } catch (error) {
                 console.error('刪除會員時發生錯誤:', error);
-                alert('刪除會員失敗：' + error.message);
+                await showCustomAlert('刪除會員失敗：' + error.message);
             } finally {
-                closeDeleteModal();
+                hideLoading();
             }
         }
-
-        // 在點擊對話框背景時關閉
-        window.onclick = function(event) {
-            const modal = document.getElementById('deleteConfirmModal');
-            if (event.target == modal) {
-                closeDeleteModal();
-            }
-        }
-
-        // 在搜尋完成後清空欄位
-        document.getElementById('searchBtn').addEventListener('click', async () => {
-            await searchMember();
-        });
-
-        // 在按下 Enter 鍵時也觸發搜尋
-        document.getElementById('searchBarcode').addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                await searchMember();
-            }
-        });
-
-        document.getElementById('searchIdNumber').addEventListener('keypress', async (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                await searchMember();
-            }
-        });
 
         // 增加到訪次數
         async function addVisit() {
@@ -1169,6 +1390,228 @@
 
         function hideLoading() {
             document.querySelector('.loading-overlay').style.display = 'none';
+        }
+
+        // 新增會員功能
+        async function addNewMember() {
+            try {
+                showLoading();
+                
+                // 檢查是否為管理員
+                const currentUser = auth.currentUser;
+                if (!currentUser || currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    throw new Error('權限不足');
+                }
+
+                // 獲取表單數據
+                const email = document.getElementById('newMemberEmail').value.trim();
+                const name = document.getElementById('newMemberName').value.trim();
+                const idNumber = document.getElementById('newMemberIdNumber').value.trim();
+                const birthDate = document.getElementById('newMemberBirthDate').value;
+                const phone = document.getElementById('newMemberPhone').value.trim();
+                const nationality = document.getElementById('newMemberNationality').value.trim();
+
+                // 驗證必填欄位（移除 email 的必填檢查）
+                if (!name || !idNumber || !birthDate || !phone || !nationality) {
+                    throw new Error('請填寫所有必填欄位（電子郵件為選填）');
+                }
+
+                // 如果有填寫 email，則檢查格式
+                if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    throw new Error('請輸入有效的電子郵件地址');
+                }
+
+                // 生成會員條碼
+                const timestamp = Date.now();
+                const barcode = `MEM${timestamp}`;
+
+                // 檢查是否已存在相同的證件號碼
+                const existingMemberQuery = await db.collectionGroup('data')
+                    .where('idNumber', '==', idNumber)
+                    .where('role', '==', 'customer')
+                    .get();
+
+                if (!existingMemberQuery.empty) {
+                    throw new Error('此證件號碼已被註冊');
+                }
+
+                // 創建新的會員文檔
+                const newMemberRef = db.collection('users').doc();
+                await newMemberRef.collection('data').doc('profile').set({
+                    role: 'customer',
+                    email: email || '', // 如果沒有 email 則設為空字串
+                    barcode: barcode,
+                    name: name,
+                    idNumber: idNumber,
+                    birthDate: birthDate,
+                    phone: phone,
+                    nationality: nationality,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    isInfoComplete: true
+                });
+
+                // 清空表單
+                document.getElementById('newMemberEmail').value = '';
+                document.getElementById('newMemberName').value = '';
+                document.getElementById('newMemberIdNumber').value = '';
+                document.getElementById('newMemberBirthDate').value = '';
+                document.getElementById('newMemberPhone').value = '';
+                document.getElementById('newMemberNationality').value = '';
+
+                await showCustomAlert(`會員新增成功！\n會員條碼：${barcode}`);
+            } catch (error) {
+                console.error('新增會員時發生錯誤:', error);
+                await showCustomAlert('新增會員失敗：' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 新增會員表單收合功能
+        function toggleNewMemberForm() {
+            const content = document.getElementById('newMemberForm');
+            const icon = document.querySelector('.toggle-icon');
+            content.classList.toggle('expanded');
+            icon.classList.toggle('expanded');
+        }
+
+        // 會員清單相關變數
+        let currentPage = 1;
+        const membersPerPage = 10;
+        let totalMembers = 0;
+        let allMembers = [];
+
+        // 切換會員清單顯示
+        function toggleMemberList() {
+            const content = document.getElementById('memberListContent');
+            const icon = content.previousElementSibling.querySelector('.toggle-icon');
+            content.classList.toggle('expanded');
+            icon.classList.toggle('expanded');
+            
+            if (content.classList.contains('expanded')) {
+                loadMemberList();
+            }
+        }
+
+        // 載入會員清單
+        async function loadMemberList() {
+            try {
+                showLoading();
+                
+                // 檢查管理員權限
+                if (auth.currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    throw new Error('權限不足');
+                }
+
+                // 獲取所有會員資料
+                const querySnapshot = await db.collectionGroup('data')
+                    .where('role', '==', 'customer')
+                    .get();
+
+                allMembers = await Promise.all(querySnapshot.docs.map(async doc => {
+                    const userData = doc.data();
+                    const userId = doc.ref.parent.parent.id;
+                    
+                    // 獲取到訪次數
+                    const visitsSnapshot = await db.collection('users')
+                        .doc(userId)
+                        .collection('visits')
+                        .get();
+                    
+                    return {
+                        ...userData,
+                        userId: userId,
+                        visitCount: visitsSnapshot.size
+                    };
+                }));
+
+                totalMembers = allMembers.length;
+                displayMemberList();
+                updatePagination();
+            } catch (error) {
+                console.error('載入會員清單時發生錯誤:', error);
+                await showCustomAlert('載入會員清單失敗：' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 顯示會員清單
+        function displayMemberList() {
+            const tbody = document.getElementById('memberListBody');
+            tbody.innerHTML = '';
+            
+            const start = (currentPage - 1) * membersPerPage;
+            const end = start + membersPerPage;
+            const pageMembers = allMembers.slice(start, end);
+            
+            pageMembers.forEach(member => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${member.barcode || ''}</td>
+                    <td>${member.name || ''}</td>
+                    <td>${member.phone || ''}</td>
+                    <td>${member.visitCount || 0}</td>
+                    <td class="action-column">
+                        <button class="view-btn" onclick="viewMemberDetails('${member.userId}')">查看</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 更新分頁按鈕
+        function updatePagination() {
+            const pagination = document.getElementById('memberListPagination');
+            const totalPages = Math.ceil(totalMembers / membersPerPage);
+            
+            let paginationHTML = '';
+            
+            // 上一頁按鈕
+            paginationHTML += `
+                <button onclick="changePage(${currentPage - 1})" 
+                        ${currentPage === 1 ? 'disabled' : ''}>
+                    上一頁
+                </button>
+            `;
+            
+            // 頁碼按鈕
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <button onclick="changePage(${i})" 
+                            class="${currentPage === i ? 'active' : ''}">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            // 下一頁按鈕
+            paginationHTML += `
+                <button onclick="changePage(${currentPage + 1})" 
+                        ${currentPage === totalPages ? 'disabled' : ''}>
+                    下一頁
+                </button>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // 切換頁面
+        function changePage(page) {
+            const totalPages = Math.ceil(totalMembers / membersPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            displayMemberList();
+            updatePagination();
+        }
+
+        // 處理搜尋欄位的按鍵事件
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchMember();
+            }
         }
     </script>
 </body>
