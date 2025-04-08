@@ -517,14 +517,14 @@
             <h2>SL璽愛旅店<h2>
             <div id="adminLoginSection" class="hidden">
                 <div class="form-group">
-                    <label for="email">管理員電子郵件：</label>
+                    <label for="email">電子郵件：</label>
                     <input type="email" id="email" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">管理員密碼：</label>
+                    <label for="password">密碼：</label>
                     <input type="password" id="password" required>
                 </div>
-                <button id="emailLogin">管理員登入</button>
+                <button id="emailLogin">登入（輸入完請按這個）</button>
             </div>
             <div id="memberLoginSection">
                 <p>請使用 Google 帳號登入以使用會員功能</p>
@@ -534,7 +534,7 @@
                 </button>
             </div>
             <div class="admin-login-hint">
-                <button id="showAdminLogin" class="text-button">門市人員</button>
+                <button id="showAdminLogin" class="text-button">管理員登入</button>
             </div>
         </div>
     </div>
@@ -584,6 +584,20 @@
     <!-- 店員介面 -->
     <div id="staffSection" class="hidden">
         <h2>後台</h2>
+        
+        <!-- 功能按鈕區域 -->
+        <div class="toggle-section">
+            <div class="button-group" style="margin: 15px 0; display: flex; gap: 15px;">
+                <button onclick="exportMemberData()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #4CAF50; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="display: block; font-size: 24px; margin-bottom: 5px;">📊</span>
+                    匯出會員資料
+                </button>
+                <button onclick="showScheduleDialog()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #2196F3; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="display: block; font-size: 24px; margin-bottom: 5px;">⏰</span>
+                    設定提醒時間
+                </button>
+            </div>
+        </div>
         
         <!-- 會員清單區域 -->
         <div class="toggle-section">
@@ -694,6 +708,14 @@
 
         <button id="staffLogoutBtn">登出</button>
     </div>
+
+    <!-- 添加音效元素 -->
+    <audio id="reminderSound" preload="auto">
+        <source src="SystemMessage_warning1.wav" type="audio/wav">
+    </audio>
+    <audio id="exportSound" preload="auto">
+        <source src="SystemMessage_warning2.wav" type="audio/wav">
+    </audio>
 
     <script>
         // Firebase 配置
@@ -818,6 +840,10 @@
                     if (isStaff) {
                         // 顯示管理員介面
                         showStaffInterface();
+                        const savedTime = localStorage.getItem('reminderTime');
+                        if (savedTime) {
+                            setupReminder(savedTime);
+                        }
                     } else {
                         // 檢查會員資料
                         const userProfileRef = db.collection('users').doc(user.uid)
@@ -1613,6 +1639,228 @@
                 searchMember();
             }
         }
+
+        // 音效初始化
+        const reminderSound = document.getElementById('reminderSound');
+        const exportSound = document.getElementById('exportSound');
+
+        // 音效播放函數
+        function playReminderSound() {
+            try {
+                reminderSound.currentTime = 0;
+                reminderSound.play().catch(error => {
+                    console.log('提醒音效播放失敗:', error);
+                });
+            } catch (error) {
+                console.log('提醒音效播放出錯:', error);
+            }
+        }
+
+        function playExportSound() {
+            try {
+                exportSound.currentTime = 0;
+                exportSound.play().catch(error => {
+                    console.log('匯出音效播放失敗:', error);
+                });
+            } catch (error) {
+                console.log('匯出音效播放出錯:', error);
+            }
+        }
+
+        // 在顯示提醒時播放音效
+        function showReminderDialog() {
+            playReminderSound();
+            // ... 其他提醒對話框顯示邏輯 ...
+        }
+
+        // 在匯出完成時播放音效
+        function onExportComplete() {
+            playExportSound();
+            // ... 其他匯出完成邏輯 ...
+        }
+
+        // 匯出會員資料功能
+        async function exportMemberData() {
+            try {
+                showLoading();
+                
+                // 播放匯出音效
+                playExportSound();
+                
+                // 檢查管理員權限
+                if (auth.currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    throw new Error('權限不足');
+                }
+
+                // 獲取所有會員資料
+                const querySnapshot = await db.collectionGroup('data')
+                    .where('role', '==', 'customer')
+                    .get();
+
+                // 準備 TSV 資料
+                let tsvContent = '會員條碼\t姓名\t電話\t電子郵件\t證件號碼\t出生年月日\t國籍\t到訪次數\n';
+
+                // 處理每個會員的資料
+                for (const doc of querySnapshot.docs) {
+                    const userData = doc.data();
+                    const userId = doc.ref.parent.parent.id;
+                    
+                    // 獲取到訪次數
+                    const visitsSnapshot = await db.collection('users')
+                        .doc(userId)
+                        .collection('visits')
+                        .get();
+                    
+                    // 將資料加入 TSV
+                    tsvContent += `${userData.barcode || ''}\t${userData.name || ''}\t${userData.phone || ''}\t${userData.email || ''}\t${userData.idNumber || ''}\t${userData.birthDate || ''}\t${userData.nationality || ''}\t${visitsSnapshot.size}\n`;
+                }
+
+                // 創建 Blob 並下載
+                const blob = new Blob(['\ufeff' + tsvContent], { type: 'text/tab-separated-values;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `會員資料_${new Date().toLocaleDateString()}.tsv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                await showCustomAlert('會員資料匯出完成！');
+            } catch (error) {
+                console.error('匯出會員資料時發生錯誤:', error);
+                await showCustomAlert('匯出失敗：' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 顯示排程對話框
+        function showScheduleDialog() {
+            const alertOverlay = document.querySelector('.alert-overlay');
+            const customAlert = document.querySelector('.custom-alert');
+            const messageElement = customAlert.querySelector('.message');
+            
+            // 設置對話框內容
+            messageElement.innerHTML = `
+                <h3>設定提醒時間</h3>
+                <p>請選擇每日提醒時間：</p>
+                <input type="time" id="reminderTime" value="${localStorage.getItem('reminderTime') || '09:00'}">
+            `;
+            
+            // 修改確認按鈕
+            const confirmBtn = customAlert.querySelector('.confirm-btn');
+            confirmBtn.textContent = '儲存設定';
+            
+            // 顯示對話框
+            alertOverlay.style.display = 'block';
+            customAlert.style.display = 'block';
+            
+            // 綁定確認按鈕事件
+            confirmBtn.onclick = async () => {
+                const time = document.getElementById('reminderTime').value;
+                if (!time) {
+                    await showCustomAlert('請選擇提醒時間');
+                    return;
+                }
+                
+                // 儲存設定
+                localStorage.setItem('reminderTime', time);
+                setupReminder(time);
+                
+                // 關閉對話框
+                alertOverlay.style.display = 'none';
+                customAlert.style.display = 'none';
+                
+                await showCustomAlert(`提醒時間已設定為 ${time}`);
+            };
+        }
+
+        // 設置提醒
+        function setupReminder(time) {
+            // 清除現有的提醒
+            if (window.reminderTimeout) {
+                clearTimeout(window.reminderTimeout);
+            }
+            
+            // 計算下次提醒時間
+            const [hours, minutes] = time.split(':').map(Number);
+            const now = new Date();
+            let next = new Date(now);
+            next.setHours(hours, minutes, 0, 0);
+            
+            if (next <= now) {
+                next.setDate(next.getDate() + 1);
+            }
+            
+            // 設置提醒
+            const delay = next.getTime() - now.getTime();
+            window.reminderTimeout = setTimeout(() => {
+                showReminderNotification();
+                setupReminder(time); // 設置下一次提醒
+            }, delay);
+            
+            console.log(`下次提醒時間：${next.toLocaleString()}`);
+        }
+
+        // 顯示提醒通知
+        async function showReminderNotification() {
+            playReminderSound();
+            
+            const alertOverlay = document.querySelector('.alert-overlay');
+            const customAlert = document.querySelector('.custom-alert');
+            const messageElement = customAlert.querySelector('.message');
+            
+            messageElement.innerHTML = `
+                <h3>匯出提醒</h3>
+                <p>現在是否要匯出會員資料？</p>
+            `;
+            
+            // 修改按鈕
+            const confirmBtn = customAlert.querySelector('.confirm-btn');
+            confirmBtn.textContent = '立即匯出';
+            
+            // 添加延後按鈕
+            const postponeBtn = document.createElement('button');
+            postponeBtn.textContent = '稍後提醒';
+            postponeBtn.className = 'confirm-btn';
+            postponeBtn.style.marginLeft = '10px';
+            postponeBtn.style.backgroundColor = '#6c757d';
+            confirmBtn.parentNode.appendChild(postponeBtn);
+            
+            // 顯示對話框
+            alertOverlay.style.display = 'block';
+            customAlert.style.display = 'block';
+            
+            // 綁定按鈕事件
+            confirmBtn.onclick = async () => {
+                alertOverlay.style.display = 'none';
+                customAlert.style.display = 'none';
+                postponeBtn.remove();
+                await exportMemberData();
+            };
+            
+            postponeBtn.onclick = () => {
+                alertOverlay.style.display = 'none';
+                customAlert.style.display = 'none';
+                postponeBtn.remove();
+                // 5 分鐘後再次提醒
+                setTimeout(showReminderNotification, 5 * 60 * 1000);
+            };
+        }
+
+        // 在登入後恢復提醒設定
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const isStaff = await checkIfStaff(user.uid);
+                if (isStaff) {
+                    const savedTime = localStorage.getItem('reminderTime');
+                    if (savedTime) {
+                        setupReminder(savedTime);
+                    }
+                }
+            }
+        });
     </script>
 </body>
 </html>
