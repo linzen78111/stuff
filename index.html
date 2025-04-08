@@ -2140,7 +2140,7 @@
             
             // 初始化每天的資料
             const dayData = {};
-            const days = 7;  // 固定顯示最近7天
+            const days = parseInt(document.getElementById('reportDateRange').value);  // 使用選擇的日期範圍
             for (let i = days - 1; i >= 0; i--) {
                 const currentDate = new Date(endDate);
                 currentDate.setDate(currentDate.getDate() - i);
@@ -2151,8 +2151,8 @@
             // 統計每天的新增會員數
             snapshot.docs.forEach(doc => {
                 const memberData = doc.data();
-                const joinDate = new Date(memberData.createdAt?.toDate() || Date.now());
-                if (joinDate >= startDate && joinDate <= endDate) {
+                const joinDate = memberData.createdAt?.toDate();
+                if (joinDate && joinDate >= startDate && joinDate <= endDate) {
                     const dayLabel = `${joinDate.getMonth() + 1}/${joinDate.getDate()}`;
                     if (dayData.hasOwnProperty(dayLabel)) {
                         dayData[dayLabel]++;
