@@ -12,6 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <!-- HTML5 QRCode -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .hidden {
             display: none !important;
@@ -501,6 +503,109 @@
             color: white;
             border-color: #4285f4;
         }
+
+        /* 報表分析相關樣式 */
+        .report-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            z-index: 1000;
+        }
+
+        .report-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            z-index: 1001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .report-loading img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+        }
+
+        .report-content {
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+            gap: 20px;
+        }
+
+        .report-header h2 {
+            margin: 0;
+            font-size: 24px;
+            order: 1;
+        }
+
+        .report-close-btn {
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            order: 2;
+            margin-right: 20px;
+        }
+
+        .report-close-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .report-filters {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .report-filters select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .report-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            flex: 1;
+        }
+
+        .chart-container {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .chart-container h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -597,11 +702,19 @@
             <div class="button-group" style="margin: 15px 0; display: flex; gap: 15px;">
                 <button onclick="exportMemberData()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #4CAF50; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <span style="display: block; font-size: 24px; margin-bottom: 5px;">📊</span>
-                    匯出會員資料
+                    備份匯出
+                </button>
+                <button onclick="importMemberData()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #FF9800; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="display: block; font-size: 24px; margin-bottom: 5px;">📥</span>
+                    備份導入
                 </button>
                 <button onclick="showScheduleDialog()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #2196F3; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <span style="display: block; font-size: 24px; margin-bottom: 5px;">⏰</span>
-                    設定提醒時間
+                    設定備份提醒時間
+                </button>
+                <button onclick="showReportDialog()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #9C27B0; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <span style="display: block; font-size: 24px; margin-bottom: 5px;">📈</span>
+                    情報分析
                 </button>
             </div>
         </div>
@@ -716,6 +829,47 @@
         <button id="staffLogoutBtn">登出</button>
     </div>
 
+    <!-- 報表分析對話框 -->
+    <div class="report-dialog">
+        <div class="report-loading">
+            <img src="SystemProcessing.bmp" alt="載入中">
+        </div>
+        <div class="report-content">
+            <div class="report-header">
+                <h2>情報分析</h2>
+                <button class="report-close-btn" onclick="hideReportDialog()">關閉</button>
+            </div>
+            <div class="report-filters">
+                <div class="form-group">
+                    <label for="reportDateRange">選擇日期範圍：</label>
+                    <select id="reportDateRange" onchange="updateReports()">
+                        <option value="7">最近7天</option>
+                        <option value="14">最近14天</option>
+                        <option value="30">最近30天</option>
+                        <option value="90">最近90天</option>
+                        <option value="180">最近180天</option>
+                        <option value="365">最近1年</option>
+                        <option value="730">最近2年</option>
+                    </select>
+                </div>
+            </div>
+            <div class="report-charts">
+                <div class="chart-container">
+                    <h3>會員成長趨勢</h3>
+                    <canvas id="memberGrowthChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>到訪頻率分析</h3>
+                    <canvas id="visitFrequencyChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>會員活躍度分析</h3>
+                    <canvas id="memberActivityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 添加音效元素 -->
     <audio id="reminderSound" preload="auto">
         <source src="SystemMessage_warning1.wav" type="audio/wav">
@@ -723,6 +877,42 @@
     <audio id="exportSound" preload="auto">
         <source src="SystemMessage_warning2.wav" type="audio/wav">
     </audio>
+
+    <!-- 導入數據對話框 -->
+    <div id="importDialog" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: white; z-index: 1000;">
+        <div class="report-content">
+            <div class="report-header">
+                <h2>導入備份</h2>
+                <button class="report-close-btn" onclick="hideImportDialog()">關閉</button>
+            </div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label for="importFile">選擇 TSV 檔案：</label>
+                    <input type="file" id="importFile" accept=".tsv" style="width: 100%; padding: 10px; margin: 10px 0;">
+                </div>
+                <div class="form-group">
+                    <label>導入選項：</label>
+                    <div style="margin: 10px 0;">
+                        <input type="checkbox" id="updateExisting" checked>
+                        <label for="updateExisting">更新已存在的會員資料</label>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <input type="checkbox" id="createNew" checked>
+                        <label for="createNew">創建新會員</label>
+                    </div>
+                </div>
+                <div class="button-group" style="margin-top: 20px;">
+                    <button onclick="startImport()" style="width: 100%; padding: 15px; font-size: 16px;">開始導入</button>
+                </div>
+                <div id="importProgress" style="margin-top: 20px; display: none;">
+                    <div style="width: 100%; background-color: #f0f0f0; border-radius: 4px;">
+                        <div id="importProgressBar" style="width: 0%; height: 20px; background-color: #4CAF50; border-radius: 4px; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div id="importStatus" style="text-align: center; margin-top: 10px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Firebase 配置
@@ -970,6 +1160,8 @@
 
         // 自定義提示框函數
         function showCustomAlert(message) {
+            hideLoading(); // 先隱藏加載動畫
+            
             const alertOverlay = document.querySelector('.alert-overlay');
             const customAlert = document.querySelector('.custom-alert');
             const messageElement = customAlert.querySelector('.message');
@@ -1423,11 +1615,17 @@
 
         // 添加顯示和隱藏載入動畫的函數
         function showLoading() {
-            document.querySelector('.loading-overlay').style.display = 'flex';
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
         }
 
         function hideLoading() {
-            document.querySelector('.loading-overlay').style.display = 'none';
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
         }
 
         // 新增會員功能
@@ -1740,7 +1938,7 @@
                 window.URL.revokeObjectURL(url);
 
                 hideLoading();
-                await showCustomAlert('會員資料匯出完成！');
+                await showCustomAlert('備份完成！');
             } catch (error) {
                 console.error('匯出會員資料時發生錯誤:', error);
                 hideLoading();
@@ -1756,14 +1954,14 @@
             
             // 設置對話框內容
             messageElement.innerHTML = `
-                <h3>設定提醒時間</h3>
-                <p>請選擇每日提醒時間：</p>
+                <h3>設定備份時間</h3>
+                <p>請選擇每日提醒備份時間：</p>
                 <input type="time" id="reminderTime" value="${localStorage.getItem('reminderTime') || '09:00'}">
             `;
             
             // 修改確認按鈕
             const confirmBtn = customAlert.querySelector('.confirm-btn');
-            confirmBtn.textContent = '儲存設定';
+            confirmBtn.textContent = '確認';
             
             // 顯示對話框
             alertOverlay.style.display = 'block';
@@ -1773,7 +1971,7 @@
             confirmBtn.onclick = async () => {
                 const time = document.getElementById('reminderTime').value;
                 if (!time) {
-                    await showCustomAlert('請選擇提醒時間');
+                    await showCustomAlert('請選擇提醒備份時間');
                     return;
                 }
                 
@@ -1825,13 +2023,13 @@
             const messageElement = customAlert.querySelector('.message');
             
             messageElement.innerHTML = `
-                <h3>匯出提醒</h3>
-                <p>現在是否要匯出會員資料？</p>
+                <h3>備份提醒</h3>
+                <p>現在是否要備份資料？</p>
             `;
             
             // 修改按鈕
             const confirmBtn = customAlert.querySelector('.confirm-btn');
-            confirmBtn.textContent = '立即匯出';
+            confirmBtn.textContent = '立即備份';
             
             // 添加延後按鈕
             const postponeBtn = document.createElement('button');
@@ -1874,6 +2072,516 @@
                 }
             }
         });
+
+        // 報表分析相關函數
+        let memberGrowthChart = null;
+        let visitFrequencyChart = null;
+        let memberActivityChart = null;
+
+        function toggleReportSection() {
+            const content = document.getElementById('reportContent');
+            const icon = content.previousElementSibling.querySelector('.toggle-icon');
+            content.classList.toggle('expanded');
+            icon.classList.toggle('expanded');
+            
+            if (content.classList.contains('expanded')) {
+                updateReports();
+            }
+        }
+
+        async function updateReports() {
+            try {
+                const loading = document.querySelector('.report-loading');
+                loading.style.display = 'flex';
+                
+                const days = parseInt(document.getElementById('reportDateRange').value);
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - days);
+
+                // 獲取會員資料
+                const membersSnapshot = await db.collectionGroup('data')
+                    .where('role', '==', 'customer')
+                    .get();
+
+                // 獲取訪問記錄
+                const visitsSnapshot = await db.collectionGroup('visits')
+                    .where('timestamp', '>=', startDate)
+                    .where('timestamp', '<=', endDate)
+                    .get();
+
+                // 處理資料
+                const memberData = processMemberData(membersSnapshot, startDate);
+                const visitData = processVisitData(visitsSnapshot, startDate, days);
+                const activityData = processActivityData(visitsSnapshot, membersSnapshot);
+
+                // 更新圖表
+                updateMemberGrowthChart(memberData);
+                updateVisitFrequencyChart(visitData);
+                updateMemberActivityChart(activityData);
+            } catch (error) {
+                console.error('更新報表時發生錯誤:', error);
+                await showCustomAlert('更新報表失敗：' + error.message);
+            } finally {
+                const loading = document.querySelector('.report-loading');
+                loading.style.display = 'none';
+            }
+        }
+
+        function processMemberData(snapshot, startDate) {
+            const data = {
+                labels: [],
+                counts: []
+            };
+
+            // 從今天開始往回推
+            const endDate = new Date();
+            endDate.setHours(23, 59, 59, 999);  // 設定為今天的最後一刻
+            
+            // 初始化每天的資料
+            const dayData = {};
+            const days = 7;  // 固定顯示最近7天
+            for (let i = days - 1; i >= 0; i--) {
+                const currentDate = new Date(endDate);
+                currentDate.setDate(currentDate.getDate() - i);
+                const dayLabel = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+                dayData[dayLabel] = 0;
+            }
+
+            // 統計每天的新增會員數
+            snapshot.docs.forEach(doc => {
+                const memberData = doc.data();
+                const joinDate = new Date(memberData.createdAt?.toDate() || Date.now());
+                if (joinDate >= startDate && joinDate <= endDate) {
+                    const dayLabel = `${joinDate.getMonth() + 1}/${joinDate.getDate()}`;
+                    if (dayData.hasOwnProperty(dayLabel)) {
+                        dayData[dayLabel]++;
+                    }
+                }
+            });
+
+            // 轉換為圖表資料，保持時間順序
+            Object.keys(dayData).forEach(dayLabel => {
+                data.labels.push(dayLabel);
+                data.counts.push(dayData[dayLabel]);
+            });
+
+            return data;
+        }
+
+        function processVisitData(snapshot, startDate, days) {
+            const data = {
+                labels: [],
+                counts: []
+            };
+
+            // 從今天開始往回推
+            const endDate = new Date();
+            endDate.setHours(23, 59, 59, 999);  // 設定為今天的最後一刻
+            
+            // 初始化每天的資料
+            const dayData = {};
+            for (let i = days - 1; i >= 0; i--) {
+                const currentDate = new Date(endDate);
+                currentDate.setDate(currentDate.getDate() - i);
+                const dayLabel = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+                dayData[dayLabel] = 0;
+            }
+
+            // 統計每天的訪問次數
+            snapshot.docs.forEach(doc => {
+                const visitDate = doc.data().timestamp.toDate();
+                if (visitDate >= startDate && visitDate <= endDate) {
+                    const dayLabel = `${visitDate.getMonth() + 1}/${visitDate.getDate()}`;
+                    if (dayData.hasOwnProperty(dayLabel)) {
+                        dayData[dayLabel]++;
+                    }
+                }
+            });
+
+            // 轉換為圖表資料，保持時間順序
+            Object.keys(dayData).forEach(dayLabel => {
+                data.labels.push(dayLabel);
+                data.counts.push(dayData[dayLabel]);
+            });
+
+            return data;
+        }
+
+        function processActivityData(visitsSnapshot, membersSnapshot) {
+            const memberVisits = {};
+            visitsSnapshot.docs.forEach(doc => {
+                const memberId = doc.ref.parent.parent.id;
+                memberVisits[memberId] = (memberVisits[memberId] || 0) + 1;
+            });
+
+            const activityLevels = {
+                '高活躍度': 0,
+                '中活躍度': 0,
+                '低活躍度': 0
+            };
+
+            Object.values(memberVisits).forEach(visits => {
+                if (visits >= 5) {
+                    activityLevels['高活躍度']++;
+                } else if (visits >= 2) {
+                    activityLevels['中活躍度']++;
+                } else {
+                    activityLevels['低活躍度']++;
+                }
+            });
+
+            return {
+                labels: Object.keys(activityLevels),
+                counts: Object.values(activityLevels)
+            };
+        }
+
+        function updateMemberGrowthChart(data) {
+            const ctx = document.getElementById('memberGrowthChart').getContext('2d');
+            
+            if (memberGrowthChart) {
+                memberGrowthChart.destroy();
+            }
+
+            memberGrowthChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: '每週新增會員數',
+                        data: data.counts,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '會員週增長趨勢',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `新增會員數：${context.raw} 人`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '新增會員數'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '日期'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateVisitFrequencyChart(data) {
+            const ctx = document.getElementById('visitFrequencyChart').getContext('2d');
+            
+            if (visitFrequencyChart) {
+                visitFrequencyChart.destroy();
+            }
+
+            visitFrequencyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: '每日到訪次數',
+                        data: data.counts,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '每日到訪頻率分析',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `到訪次數：${context.raw} 次`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '到訪次數'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '日期'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMemberActivityChart(data) {
+            const ctx = document.getElementById('memberActivityChart').getContext('2d');
+            
+            if (memberActivityChart) {
+                memberActivityChart.destroy();
+            }
+
+            memberActivityChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.counts,
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(255, 99, 132, 0.5)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '會員活躍度分布'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 顯示報表分析對話框
+        async function showReportDialog() {
+            try {
+                showLoading();
+                const dialog = document.querySelector('.report-dialog');
+                dialog.style.display = 'block';
+                await updateReports(); // 自動更新報表
+            } catch (error) {
+                console.error('顯示報表分析時發生錯誤:', error);
+                await showCustomAlert('顯示報表分析失敗：' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 隱藏報表分析對話框
+        function hideReportDialog() {
+            const dialog = document.querySelector('.report-dialog');
+            dialog.style.display = 'none';
+        }
+
+        // 導入會員資料相關函數
+        function importMemberData() {
+            document.getElementById('importDialog').classList.remove('hidden');
+        }
+
+        function hideImportDialog() {
+            document.getElementById('importDialog').classList.add('hidden');
+            document.getElementById('importFile').value = '';
+            document.getElementById('importProgress').style.display = 'none';
+            document.getElementById('importProgressBar').style.width = '0%';
+            document.getElementById('importStatus').textContent = '';
+        }
+
+        async function startImport() {
+            try {
+                showLoading();
+                const fileInput = document.getElementById('importFile');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    await showCustomAlert('請選擇要導入的檔案');
+                    return;
+                }
+
+                const updateExisting = document.getElementById('updateExisting').checked;
+                const createNew = document.getElementById('createNew').checked;
+
+                if (!updateExisting && !createNew) {
+                    await showCustomAlert('請至少選擇一個導入選項');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const content = e.target.result;
+                        const lines = content.split('\n');
+                        
+                        // 檢查標題行
+                        const headers = lines[0].split('\t');
+                        const requiredHeaders = ['會員條碼', '姓名', '電話', '電子郵件', '證件號碼', '出生年月日', '國籍', '到訪次數'];
+                        const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
+                        
+                        if (missingHeaders.length > 0) {
+                            await showCustomAlert(`檔案格式錯誤：缺少必要的欄位 - ${missingHeaders.join(', ')}`);
+                            return;
+                        }
+
+                        // 顯示進度條
+                        document.getElementById('importProgress').style.display = 'block';
+                        const progressBar = document.getElementById('importProgressBar');
+                        const statusText = document.getElementById('importStatus');
+
+                        // 處理每一行數據
+                        let successCount = 0;
+                        let errorCount = 0;
+                        let totalCount = lines.length - 1; // 減去標題行
+
+                        for (let i = 1; i < lines.length; i++) {
+                            if (!lines[i].trim()) continue;
+
+                            const values = lines[i].split('\t');
+                            const memberData = {
+                                barcode: values[0],
+                                name: values[1],
+                                phone: values[2],
+                                email: values[3],
+                                idNumber: values[4],
+                                birthDate: values[5],
+                                nationality: values[6],
+                                visitCount: parseInt(values[7]) || 0
+                            };
+
+                            try {
+                                // 檢查是否已存在相同證件號碼的會員
+                                const existingQuery = await db.collectionGroup('data')
+                                    .where('idNumber', '==', memberData.idNumber)
+                                    .where('role', '==', 'customer')
+                                    .get();
+
+                                if (!existingQuery.empty && updateExisting) {
+                                    // 更新現有會員
+                                    const existingDoc = existingQuery.docs[0];
+                                    const userId = existingDoc.ref.parent.parent.id;
+                                    
+                                    // 更新會員資料
+                                    await existingDoc.ref.update({
+                                        name: memberData.name,
+                                        phone: memberData.phone,
+                                        email: memberData.email,
+                                        birthDate: memberData.birthDate,
+                                        nationality: memberData.nationality,
+                                        isInfoComplete: true
+                                    });
+
+                                    // 更新到訪次數
+                                    const currentVisits = await db.collection('users')
+                                        .doc(userId)
+                                        .collection('visits')
+                                        .get();
+
+                                    const visitsToAdd = memberData.visitCount - currentVisits.size;
+                                    if (visitsToAdd > 0) {
+                                        const batch = db.batch();
+                                        for (let j = 0; j < visitsToAdd; j++) {
+                                            const visitRef = db.collection('users')
+                                                .doc(userId)
+                                                .collection('visits')
+                                                .doc();
+                                            batch.set(visitRef, {
+                                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                                scannedBy: auth.currentUser.uid
+                                            });
+                                        }
+                                        await batch.commit();
+                                    }
+                                } else if (createNew) {
+                                    // 創建新會員
+                                    const newMemberRef = db.collection('users').doc();
+                                    await newMemberRef.collection('data').doc('profile').set({
+                                        role: 'customer',
+                                        ...memberData,
+                                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                        isInfoComplete: true
+                                    });
+
+                                    // 添加訪問記錄
+                                    if (memberData.visitCount > 0) {
+                                        const batch = db.batch();
+                                        for (let j = 0; j < memberData.visitCount; j++) {
+                                            const visitRef = db.collection('users')
+                                                .doc(newMemberRef.id)
+                                                .collection('visits')
+                                                .doc();
+                                            batch.set(visitRef, {
+                                                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                                scannedBy: auth.currentUser.uid
+                                            });
+                                        }
+                                        await batch.commit();
+                                    }
+                                }
+
+                                successCount++;
+                            } catch (error) {
+                                console.error(`處理第 ${i} 行數據時發生錯誤:`, error);
+                                errorCount++;
+                            }
+
+                            // 更新進度條
+                            const progress = (i / totalCount) * 100;
+                            progressBar.style.width = `${progress}%`;
+                            statusText.textContent = `已處理 ${i}/${totalCount} 筆資料 (成功: ${successCount}, 失敗: ${errorCount})`;
+                        }
+
+                        hideLoading();
+                        await showCustomAlert(`導入完成！\n成功: ${successCount} 筆\n失敗: ${errorCount} 筆`);
+                        hideImportDialog();
+                    } catch (error) {
+                        console.error('導入數據時發生錯誤:', error);
+                        hideLoading();
+                        await showCustomAlert('導入失敗：' + error.message);
+                    }
+                };
+
+                reader.readAsText(file);
+            } catch (error) {
+                console.error('開始導入時發生錯誤:', error);
+                hideLoading();
+                await showCustomAlert('導入失敗：' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
