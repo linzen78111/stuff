@@ -26,8 +26,8 @@
 
         /* 後台管理介面樣式 */
         #staffSection {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 100%;
+            margin: 0;
             padding: 20px;
             background-color: #fff;
         }
@@ -38,7 +38,7 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin: 20px auto;
-            max-width: 600px;
+            max-width: 100%;
         }
 
         #staffSection .search-section h2 {
@@ -312,24 +312,29 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.9);
+            width: 100vw;
+            height: 100vh;
+            background-color: #fff;
             z-index: 2000;
             justify-content: center;
             align-items: center;
         }
 
         .loading-text {
-            background-color: #fff;
-            padding: 40px 80px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            font-size: 24px;
-            color: #333;
-            text-align: center;
-            min-width: 300px;
-            border: 1px solid #e0e0e0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .loading-text img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            max-width: 100vw;
+            max-height: 100vh;
         }
 
         /* 自定義提示框樣式 */
@@ -387,7 +392,7 @@
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin: 20px auto;
-            max-width: 600px;
+            max-width: 100%;
         }
 
         .toggle-header {
@@ -508,7 +513,9 @@
 
     <!-- 載入動畫 -->
     <div class="loading-overlay">
-        <div class="loading-text">資料處理中,請稍候...</div>
+        <div class="loading-text">
+            <img src="SystemProcessing.bmp" alt="系統處理中">
+        </div>
     </div>
 
     <!-- 登入區域 -->
@@ -1368,6 +1375,7 @@
 
                 if (!window.currentSearchedMember) {
                     console.log('未找到當前搜尋的會員資料');
+                    hideLoading();
                     await showCustomAlert('請先搜尋會員');
                     return;
                 }
@@ -1375,12 +1383,14 @@
                 // 先確認是否為管理員
                 const currentUser = auth.currentUser;
                 if (!currentUser) {
+                    hideLoading();
                     throw new Error('請先登入');
                 }
                 
                 console.log('當前用戶:', currentUser.uid);
                 
                 if (currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    hideLoading();
                     throw new Error('權限不足');
                 }
 
@@ -1396,16 +1406,18 @@
                     });
 
                 console.log('到訪紀錄已新增:', visitRef.id);
+                hideLoading();
                 await showCustomAlert('已成功增加到訪紀錄！');
                 
                 // 重新載入會員詳情
                 console.log('重新載入會員詳情');
+                showLoading();
                 await viewMemberDetails(userId);
+                hideLoading();
             } catch (error) {
                 console.error('增加到訪紀錄時發生錯誤:', error);
-                await showCustomAlert('增加到訪紀錄失敗：' + error.message);
-            } finally {
                 hideLoading();
+                await showCustomAlert('增加到訪紀錄失敗：' + error.message);
             }
         }
 
@@ -1689,6 +1701,7 @@
                 
                 // 檢查管理員權限
                 if (auth.currentUser.uid !== 't4R9VmALi2SW2fTITmBAtlYDzq32') {
+                    hideLoading();
                     throw new Error('權限不足');
                 }
 
@@ -1726,12 +1739,12 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
 
+                hideLoading();
                 await showCustomAlert('會員資料匯出完成！');
             } catch (error) {
                 console.error('匯出會員資料時發生錯誤:', error);
-                await showCustomAlert('匯出失敗：' + error.message);
-            } finally {
                 hideLoading();
+                await showCustomAlert('匯出失敗：' + error.message);
             }
         }
 
