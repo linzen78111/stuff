@@ -695,22 +695,22 @@
 
     <!-- 店員介面 -->
     <div id="staffSection" class="hidden">
-        <h2>後台</h2>
+        <h2>SC</h2>
         
         <!-- 功能按鈕區域 -->
         <div class="toggle-section">
             <div class="button-group" style="margin: 15px 0; display: flex; gap: 15px;">
                 <button onclick="exportMemberData()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #4CAF50; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <span style="display: block; font-size: 24px; margin-bottom: 5px;">📊</span>
-                    備份匯出
+                    DB Backup
                 </button>
                 <button onclick="importMemberData()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #FF9800; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <span style="display: block; font-size: 24px; margin-bottom: 5px;">📥</span>
-                    備份導入
+                    快速DB Backup復舊
                 </button>
                 <button onclick="showScheduleDialog()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #2196F3; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <span style="display: block; font-size: 24px; margin-bottom: 5px;">⏰</span>
-                    設定備份提醒時間
+                    設定DB Backup提醒時間
                 </button>
                 <button onclick="showReportDialog()" style="flex: 1; padding: 15px; font-size: 16px; background-color: #9C27B0; transition: all 0.3s ease; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <span style="display: block; font-size: 24px; margin-bottom: 5px;">📈</span>
@@ -882,7 +882,7 @@
     <div id="importDialog" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: white; z-index: 1000;">
         <div class="report-content">
             <div class="report-header">
-                <h2>導入備份</h2>
+                <h2>快速DB Backup復舊</h2>
                 <button class="report-close-btn" onclick="hideImportDialog()">關閉</button>
             </div>
             <div style="padding: 20px;">
@@ -1938,7 +1938,7 @@
                 window.URL.revokeObjectURL(url);
 
                 hideLoading();
-                await showCustomAlert('備份完成！');
+                await showCustomAlert('DB Backup完成！');
             } catch (error) {
                 console.error('匯出會員資料時發生錯誤:', error);
                 hideLoading();
@@ -1954,8 +1954,8 @@
             
             // 設置對話框內容
             messageElement.innerHTML = `
-                <h3>設定備份時間</h3>
-                <p>請選擇每日提醒備份時間：</p>
+                <h3>設定DB Backup時間</h3>
+                <p>請選擇每日提醒DB Backup時間：</p>
                 <input type="time" id="reminderTime" value="${localStorage.getItem('reminderTime') || '09:00'}">
             `;
             
@@ -1971,7 +1971,7 @@
             confirmBtn.onclick = async () => {
                 const time = document.getElementById('reminderTime').value;
                 if (!time) {
-                    await showCustomAlert('請選擇提醒備份時間');
+                    await showCustomAlert('請選擇提醒DB Backup時間');
                     return;
                 }
                 
@@ -2023,13 +2023,13 @@
             const messageElement = customAlert.querySelector('.message');
             
             messageElement.innerHTML = `
-                <h3>備份提醒</h3>
-                <p>現在是否要備份資料？</p>
+                <h3>DB Backup提醒</h3>
+                <p>現在是否要DB Backup？</p>
             `;
             
             // 修改按鈕
             const confirmBtn = customAlert.querySelector('.confirm-btn');
-            confirmBtn.textContent = '立即備份';
+            confirmBtn.textContent = '立即DB Backup';
             
             // 添加延後按鈕
             const postponeBtn = document.createElement('button');
@@ -2569,17 +2569,17 @@
                         await showCustomAlert(`導入完成！\n成功: ${successCount} 筆\n失敗: ${errorCount} 筆`);
                         hideImportDialog();
                     } catch (error) {
-                        console.error('導入數據時發生錯誤:', error);
+                        console.error('快速DB Backup復舊時發生錯誤:', error);
                         hideLoading();
-                        await showCustomAlert('導入失敗：' + error.message);
+                        await showCustomAlert('快速DB Backup復舊失敗：' + error.message);
                     }
                 };
 
                 reader.readAsText(file);
             } catch (error) {
-                console.error('開始導入時發生錯誤:', error);
+                console.error('開始快速DB Backup復舊時發生錯誤:', error);
                 hideLoading();
-                await showCustomAlert('導入失敗：' + error.message);
+                await showCustomAlert('快速DB Backup復舊失敗：' + error.message);
             }
         }
     </script>
